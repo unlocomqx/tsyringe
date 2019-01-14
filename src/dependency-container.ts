@@ -12,7 +12,7 @@ import {
   isTokenProvider,
   isValueProvider
 } from "./providers";
-import {RegistrationOptions, constructor} from "./types";
+import {PropertyInfo, RegistrationOptions, constructor} from "./types";
 
 type Registration<T = any> = {
   provider: Provider<T>;
@@ -94,6 +94,12 @@ export class DependencyContainer implements Types.DependencyContainer {
    * @return {T} An instance of the dependency
    */
   public resolve<T>(token: InjectionToken<T>): T {
+    if (!token) {
+      throw `Attempted to resolve an undefined dependency token`;
+    }
+
+    this.assignLazyProps(token);
+
     const registration = this.getRegistration(token);
 
     if (!registration) {
@@ -122,6 +128,18 @@ export class DependencyContainer implements Types.DependencyContainer {
 
     // No registration for this token, but since it's a constructor, return an instance
     return this.construct(<constructor<T>>token);
+  }
+
+  private assignLazyProps(token: InjectionToken<any>): void {
+    const key = (<any>token).name;
+    const propsInfos = lazyPropsInfo.get(key) || [];
+    if (propsInfos.length === 0) {
+      return;
+    }
+    lazyPropsInfo.delete(key);
+    propsInfos.map((propsInfo) => {
+      propsInfo.target[propsInfo.property] = this.resolve(token);
+    });
   }
 
   /**
@@ -174,5 +192,6 @@ export class DependencyContainer implements Types.DependencyContainer {
 }
 
 export const typeInfo = new Map<constructor<any>, any[]>();
+export const lazyPropsInfo = new Map<InjectionToken<any>, PropertyInfo[]>();
 
 export const instance: Types.DependencyContainer = new DependencyContainer();

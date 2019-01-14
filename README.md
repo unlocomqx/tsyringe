@@ -13,6 +13,7 @@ constructor injection.
   * [singleton()](#singleton)
   * [autoInjectable()](#autoinjectable)
   * [inject()](#inject)
+  * [lazyInject()](#lazyinject)
 * [Full Examples](#full-examples)
 * [Contributing](#contributing)
 
@@ -113,7 +114,7 @@ Notice how in order to allow the use of the empty constructor `new Foo()`, we
 need to make the parameters optional, e.g. `database?: Database`
 
 ### inject()
-Parameter decorator factory that allows for interface and other non-class
+Property decorator factory that allows for interface and other non-class
 information to be stored in the constructor's metadata
 
 #### Usage
@@ -127,6 +128,29 @@ interface Database {
 @injectable()
 class Foo {
   constructor(@inject("Database") private database?: Database) {}
+}
+```
+
+### lazyInject()
+Property decorator that allows to lazily resolve a dependency if it can not be resolved
+when resolving the current class 
+
+#### Usage
+```typescript
+// file: chicken.ts
+@injectable()
+export class Chicken {
+  @lazyInject("Egg") public egg: Egg;
+
+  constructor() { }
+}
+
+// file: egg.ts
+@injectable()
+export class Egg {
+  @lazyInject("Chicken") public chicken: Chicken;
+
+  constructor() { }
 }
 ```
 
