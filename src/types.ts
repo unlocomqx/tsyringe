@@ -9,6 +9,11 @@ export type RegistrationOptions = {
   singleton: boolean;
 };
 
+export type PropertyInfo = {
+  target: any,
+  property: string
+};
+
 export interface DependencyContainer {
   register<T>(token: InjectionToken<T>, provider: ValueProvider<T>): DependencyContainer;
   register<T>(token: InjectionToken<T>, provider: FactoryProvider<T>): DependencyContainer;

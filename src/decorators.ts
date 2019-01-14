@@ -1,7 +1,7 @@
 import {INJECTION_TOKEN_METADATA_KEY, getParamInfo} from "./reflection-helpers";
 import {InjectionToken, Provider} from "./providers";
 import {RegistrationOptions, constructor} from "./types";
-import {instance as globalContainer, typeInfo} from "./dependency-container";
+import {instance as globalContainer, lazyPropsInfo, typeInfo} from "./dependency-container";
 
 /**
  * Class decorator factory that allows the class' dependencies to be injected
@@ -58,6 +58,22 @@ export function inject(token: InjectionToken<any>): (target: any, propertyKey: s
     const injectionTokens = Reflect.getOwnMetadata(INJECTION_TOKEN_METADATA_KEY, target) || {};
     injectionTokens[parameterIndex] = token;
     Reflect.defineMetadata(INJECTION_TOKEN_METADATA_KEY, injectionTokens, target);
+  };
+}
+
+/**
+ * Parameter decorator factory that allows for interface information to be stored in the constructor's metadata
+ *
+ * @return {Function} The parameter decorator
+ */
+export function lazyInject(token: InjectionToken<any>): (target: any, propertyKey: string) => any {
+  return function(target: any, _propertyKey: string): void {
+    const info = lazyPropsInfo.get(token) || [];
+    info.push({
+      target: target,
+      property: _propertyKey
+    });
+    lazyPropsInfo.set(token, info);
   };
 }
 
