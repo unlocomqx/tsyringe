@@ -11,7 +11,8 @@ export type RegistrationOptions = {
 
 export type PropertyInfo = {
   target: any,
-  property: string
+  property: string,
+  lazyRegistration: string
 };
 
 export interface DependencyContainer {

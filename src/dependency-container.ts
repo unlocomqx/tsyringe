@@ -41,7 +41,9 @@ export class DependencyContainer implements Types.DependencyContainer {
         throw "Cannot use {singleton: true} with ValueProviders or FactoryProviders";
       }
     }
-
+    if (isTokenProvider(provider) && typeof provider.useToken === "string") {
+      lazyRegistrationInfo.set(provider.useToken, token);
+    }
     this._registry.set(token, {provider, options});
 
     return this;
@@ -98,6 +100,7 @@ export class DependencyContainer implements Types.DependencyContainer {
       throw `Attempted to resolve an undefined dependency token`;
     }
 
+    this.assignLazyRegistration(token);
     this.assignLazyProps(token);
 
     const registration = this.getRegistration(token);
@@ -137,9 +140,24 @@ export class DependencyContainer implements Types.DependencyContainer {
       return;
     }
     lazyPropsInfo.delete(key);
+
+    const lazyRegistration = lazyRegistrationInfo.get(key) || [];
+    if (lazyRegistration) {
+      lazyPropsInfo.delete(<InjectionToken<any>>lazyRegistration);
+    }
+
     propsInfos.map((propsInfo) => {
       propsInfo.target[propsInfo.property] = this.resolve(token);
     });
+  }
+
+  private assignLazyRegistration(token: InjectionToken<any>): void {
+    const key = (<any>token).name;
+    const lazyRegistration = lazyRegistrationInfo.get(key) || [];
+    const propsInfos: PropertyInfo[] = lazyPropsInfo.get(<InjectionToken<any>>lazyRegistration) || [];
+    if (propsInfos.length) {
+      lazyPropsInfo.set(key, propsInfos);
+    }
   }
 
   /**
@@ -193,5 +211,6 @@ export class DependencyContainer implements Types.DependencyContainer {
 
 export const typeInfo = new Map<constructor<any>, any[]>();
 export const lazyPropsInfo = new Map<InjectionToken<any>, PropertyInfo[]>();
+export const lazyRegistrationInfo = new Map<InjectionToken<any>, InjectionToken<any>>();
 
 export const instance: Types.DependencyContainer = new DependencyContainer();
